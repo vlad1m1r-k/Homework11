@@ -1,21 +1,11 @@
 package ua.kiev.prog.homework11.part1;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Scanner;
 
 public class Main {
-    private static Translator translator;
+    private static Translator translator = new Translator();
 
     public static void main(String[] args) {
-        if (!loadDict()) {
-            translator = new Translator();
-            System.out.println("Warning: Translator dictionary is empty");
-        }
         Scanner keyboardScanner = new Scanner(System.in);
         String choose = "";
         do {
@@ -24,50 +14,18 @@ public class Main {
             choose = keyboardScanner.nextLine();
             switch (choose) {
                 case "1":
-                    translate();
+                    translator.translate();
                     break;
                 case "2":
                     addWord();
                     break;
                 case "3":
-                    printDictionary();
+                    translator.printDict();
                     break;
                 case "4":
-                    saveDict();
+                    translator.saveDict();
             }
         } while (!choose.equals("0"));
-    }
-
-    private static boolean loadDict() {
-        File dictSave = new File("translator.sav");
-        if (dictSave.exists()) {
-            try (ObjectInputStream input = new ObjectInputStream(new FileInputStream(dictSave))) {
-                translator = (Translator) input.readObject();
-                return true;
-            } catch (IOException e) {
-                System.out.println("Error load file.");
-                return false;
-            } catch (ClassNotFoundException cnfe) {
-                System.out.println("Can not load object.");
-                return false;
-            }
-        }
-        return false;
-    }
-
-    private static void saveDict() {
-        File file = new File("translator.sav");
-        if (file.exists() && !file.isDirectory()) file.delete();
-        try (ObjectOutputStream output = new ObjectOutputStream(new FileOutputStream(file))) {
-            output.writeObject(translator);
-            System.out.println("Saved to: " + file.getAbsolutePath());
-        } catch (IOException e) {
-            System.out.println("Error saving file.");
-        }
-    }
-
-    private static void printDictionary() {
-        translator.printDict();
     }
 
     private static void addWord() {
@@ -90,29 +48,5 @@ public class Main {
         }
         translator.addWord(key, value);
         System.out.println("Added.");
-    }
-
-    private static void translate() {
-        StringBuilder result = new StringBuilder();
-        try {
-            List<String> strings = Files.readAllLines(Paths.get("English.in"));
-            for (String string : strings) {
-                String[] words = string.split(" +");
-                for (String word : words) {
-                    String punct = "";
-                    if (("" + word.charAt(word.length() - 1)).matches("\\W")) {
-                        punct = "" + word.charAt(word.length() - 1);
-                        word = word.substring(0, word.length() - 1);
-                    }
-                    result.append(translator.translateWord(word.toLowerCase()));
-                    result.append(punct);
-                    result.append(" ");
-                }
-            }
-            result = new StringBuilder(result.toString().replaceAll(" +", " "));
-            Files.write(Paths.get("Ukrainian.out"),result.toString().getBytes(), StandardOpenOption.CREATE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
